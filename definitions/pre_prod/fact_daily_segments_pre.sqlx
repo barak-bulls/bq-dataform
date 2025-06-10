@@ -1,0 +1,11 @@
+config {
+  type: "incremental",
+  uniqueKey: ["id"],
+  schema: "pre_prod",
+  assertions: {
+    uniqueKey: ["offer_id","date","vol_ts_id","os","connection","scd_jv_id"],
+    nonNull: ["offer_id","date","vol_ts_id","os","connection","scd_jv_id"]
+  }  
+}
+
+select * from ${ref("stg__daily__segments__final")}

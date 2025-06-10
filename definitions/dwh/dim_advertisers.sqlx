@@ -1,0 +1,7 @@
+config {
+  type: "incremental",
+  uniqueKey: ["id"],
+  schema: "dwh_prod"
+}
+
+select * from ${ref("stg__advertisers")}

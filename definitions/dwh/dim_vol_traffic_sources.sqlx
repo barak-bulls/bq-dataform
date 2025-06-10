@@ -1,0 +1,11 @@
+config {
+  type: "incremental",
+  uniqueKey: ["id"],
+  schema: "dwh_prod",
+  assertions: {
+    uniqueKey: ["vol_ts_name"],
+    nonNull: ["general_ts_id"]
+  }
+}
+
+select * from ${ref("stg__traffic__sources")}

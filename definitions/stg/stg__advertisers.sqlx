@@ -1,0 +1,29 @@
+config {
+  type: "view",
+  schema: "stg"
+}
+
+with a as (
+select 
+    adv.id
+    ,ano.advertiser_id an_advertiser_id
+    ,ano.an_id
+    ,ano.name
+    ,br.id brand_id
+from mrr.an_offers ano
+  left outer join dwh_prod.dim_advertisers adv on adv.an_advertiser_id=ano.advertiser_id and adv.an_id=ano.an_id
+  left outer join ${ref("dim__brands")} br on ano.domain=br.brand
+qualify row_number() over (partition by ano.advertiser_id,ano.an_id)=1)
+
+,u as (select * from a where id is not null) 
+
+,i as (select 
+        row_number() over()+(select max(id) from dwh_prod.dim_advertisers) as id
+        ,an_advertiser_id
+        ,an_id
+        ,name
+        ,brand_id
+      from a
+      where id is null)
+
+select * from u union all select * from i

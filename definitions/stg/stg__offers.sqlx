@@ -1,0 +1,49 @@
+config {
+  type: "view",
+  schema: "stg"
+}
+
+with a as(
+    select  
+        sds.offer_id as id
+        ,sds.vol_offer_id
+        ,sds.voluumAccountId
+        ,sds.name
+        ,sds.is_active
+        ,sds.advertiser_id
+        ,sds.company_id
+        ,sds.aux_adv_an_id
+        ,sds.aux_an_id
+        ,sds.offerWorkspaceName
+        ,sds.geo_id
+        ,sds.is_cpc
+        ,sds.date last_visit
+        from ${ref("stg__daily__segments")} sds
+          left outer join `dwh_prod.dim_offers` pdo on sds.voluumAccountId=pdo.jv_id and sds.vol_offer_id=pdo.vol_offer_id 
+        where 
+        lower(sds.name) not like 'global%'
+        and lower(sds.name) not like '%mgc%'
+        qualify row_number() over (partition by sds.vol_offer_id,sds.voluumAccountId order by date desc)=1
+)
+
+,u as (select * from a where id is not null) 
+
+,i as (
+    select row_number() over() + (select max(id) from dwh_prod.dim_offers) id
+        ,vol_offer_id
+        ,voluumAccountId
+        ,name
+        ,is_active
+        ,advertiser_id
+        ,company_id
+        ,aux_adv_an_id
+        ,aux_an_id
+        ,offerWorkspaceName
+        ,geo_id
+        ,is_cpc
+        ,last_visit
+    from a
+    where id is null
+)
+
+select * from u union all select * from i

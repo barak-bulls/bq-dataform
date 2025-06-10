@@ -1,0 +1,13 @@
+config {
+  type: "incremental",
+  uniqueKey: ["voluum_click_id"],
+  tags: ["trigger"],
+    assertions: {
+    nonNull: ["an_id"]
+  },  
+  schema: "dwh_prod"
+}
+
+select * from ${ref("stg__commissions")}
+where date is not null
+qualify row_number() over (partition by voluum_click_id)=1 

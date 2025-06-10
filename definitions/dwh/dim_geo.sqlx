@@ -1,0 +1,28 @@
+config {
+  type: "incremental",
+  uniqueKey: ["country_code"],
+  schema: "dwh_prod"
+}
+
+/*
+select
+  row_number() over() as id
+  ,domain as brand
+from (select distinct domain
+  from dwh_prod.dim_advertisers) a
+  */
+
+ 
+select
+  row_number() over() + (select max(id) from ${self()}) as id
+  ,offer_country_code as country_code
+from (select distinct offer_country_code
+  from mrr.dim_voluum_offers dvo
+  where not exists(
+    select country_code from ${self()} sf where dvo.offer_country_code=sf.country_code
+  )) a
+
+
+
+
+

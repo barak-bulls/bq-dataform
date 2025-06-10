@@ -1,0 +1,5 @@
+defaultProject: bm-bigquery
+defaultLocation: europe-west4
+defaultDataset: staging
+defaultAssertionDataset: dataform_assertions
+dataformCoreVersion: 3.0.0

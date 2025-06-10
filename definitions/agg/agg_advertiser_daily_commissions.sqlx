@@ -1,0 +1,64 @@
+config {
+  type: "view",
+  schema: "dwh_prod"
+}
+
+with piv as (
+  select *
+  from
+  (SELECT date, date_diff(date, current_date(), DAY) as days_before, advertiser_id,an_id, status, count(*) as clicks, sum(usd_amount) as usd_amount FROM `bm-bigquery.dwh_prod.fact_commissions` GROUP BY date, advertiser_id, status,an_id)
+  pivot(sum(clicks) as clicks, sum(usd_amount) usd for status in ('paid','rejected','confirmed','open'))
+  where advertiser_id is not null
+)
+
+,coal as (
+  select
+    date
+    ,days_before
+    ,advertiser_id
+    ,coalesce(clicks_paid,0)
+      + case when an_id=2 then coalesce(clicks_confirmed,0) else 0 end as clicks_paid
+    ,coalesce(clicks_rejected,0) clicks_rejected
+    ,coalesce(clicks_open,0) clicks_open
+    ,case when an_id=2 then 0 else coalesce(clicks_confirmed,0) end as clicks_confirmed
+    ,coalesce(usd_paid,0) usd_paid
+    ,coalesce(usd_rejected,0) usd_rejected
+    ,coalesce(usd_open,0) usd_open
+    ,coalesce(usd_confirmed,0) usd_confirmed
+    ,coalesce(clicks_paid,0)+coalesce(clicks_rejected,0)+coalesce(clicks_open,0)+coalesce(clicks_confirmed,0) as clicks_total
+    ,coalesce(usd_paid,0)+coalesce(usd_rejected,0)+coalesce(usd_open,0)+coalesce(usd_confirmed,0) as usd_total
+
+  from piv
+)
+
+
+  SELECT 
+  advertiser_id,
+  date,
+  clicks_paid,
+  SUM(CASE WHEN days_before >= -366 THEN clicks_paid ELSE 0 END)
+    OVER (PARTITION BY advertiser_id ORDER BY date ASC) AS cum_paid_clicks,
+    
+  clicks_rejected,
+  SUM(CASE WHEN days_before >= -366 THEN clicks_rejected ELSE 0 END)
+    OVER (PARTITION BY advertiser_id ORDER BY date ASC) AS cum_rejected_clicks,
+    
+  clicks_total,
+  SUM(CASE WHEN days_before >= -366 THEN clicks_total ELSE 0 END)
+    OVER (PARTITION BY advertiser_id ORDER BY date ASC) AS cum_total_clicks,
+    
+  usd_paid,
+  SUM(CASE WHEN days_before >= -366 THEN usd_paid ELSE 0 END)
+    OVER (PARTITION BY advertiser_id ORDER BY date ASC) AS cum_paid_usd,
+    
+  usd_rejected,
+  SUM(CASE WHEN days_before >= -366 THEN usd_rejected ELSE 0 END)
+    OVER (PARTITION BY advertiser_id ORDER BY date ASC) AS cum_rejected_usd,
+
+  coal.clicks_open,
+  coal.clicks_confirmed,
+  coal.usd_open,
+  coal.usd_confirmed,
+  coal.usd_total
+
+FROM coal

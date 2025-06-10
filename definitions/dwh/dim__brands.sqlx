@@ -1,0 +1,28 @@
+config {
+  type: "incremental",
+  uniqueKey: ["brand"],
+  schema: "dwh_prod"
+}
+
+/*
+select
+  row_number() over() as id
+  ,domain as brand
+from (select distinct domain
+  from dwh_prod.dim_advertisers) a
+  */
+
+ 
+select
+  row_number() over() + (select max(id) from ${self()}) as id
+  ,domain as brand
+from (select distinct domain
+  from mrr.an_offers ao
+  where not exists(
+    select brand from dwh_prod.dim__brands db where ao.domain=db.brand 
+  )) a
+
+
+
+
+

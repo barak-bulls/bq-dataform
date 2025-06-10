@@ -1,0 +1,16 @@
+config {
+  type: "incremental",
+  uniqueKey: ["affnetwork"],
+  schema: "stg"
+}
+
+/*
+select
+  row_number() over() as id
+  ,domain as brand
+from (select distinct domain
+  from dwh_prod.dim_advertisers) a
+  */
+
+ 
+select * from mrr.an_dictionary

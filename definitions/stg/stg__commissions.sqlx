@@ -1,0 +1,28 @@
+config {
+  type: "view",
+  schema: "stg"
+}
+
+select 
+  c.date
+  ,c.status
+  ,c.voluum_click_id
+  ,c.currency
+  ,c.adv_id as an_advertiser_id
+  ,c.original_amount
+  ,c.updated_amount
+  ,c.account
+  ,acc.an_id
+  ,e.value as exchange_rate
+  ,case when status in ('paid','confirmed') then c.updated_amount/e.value else c.original_amount/e.value end usd_amount
+  ,case when c.account=6 then 'magic' when lower(acc.name) like '%cpc%' then 'cpc' else 'standard' end as usage
+  ,cast(null as string) as an_offer_id
+  ,case when c.status in ('paid','rejected') then current_date() else null end decision_date
+  ,cast(null as string) as co_key
+  ,a.id as advertiser_id
+from `mrr.commissions` c
+  inner join `mrr.exchange` e on c.currency=e.currency
+  left outer join `stg.stg__accounts_native` acc on c.account=acc.id
+  left outer join ${ref("dim_advertisers")} a on   
+    c.adv_id=a.an_advertiser_id
+    and acc.an_id=a.an_id 

@@ -1,0 +1,9 @@
+config {
+  type: "incremental",
+  uniqueKey: ["id"],
+  schema: "dwh_prod",
+  dependencies: ["pre_prod_fact_daily_segments_pre_assertions_rowConditions","pre_prod_fact_daily_segments_pre_assertions_uniqueKey_0"],
+  tags: ["trigger"]
+}
+
+select * from ${ref("stg__daily__segments__final")}
