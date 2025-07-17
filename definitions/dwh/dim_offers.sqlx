@@ -6,6 +6,23 @@ config {
     uniqueKey:["vol_offer_id","jv_id"]
   }
 }
+/*
+select 
+  id
+  ,vol_offer_id
+  ,voluumAccountId as jv_id
+  ,name
+  ,is_active
+  ,advertiser_id
+  ,company_id
+  ,aux_adv_an_id
+  ,cast(aux_an_id as int64) as aux_an_id
+  ,offerWorkspaceName as aux_workspace
+  ,geo_id
+  ,is_cpc
+  ,last_visit
+from ${ref("stg__offers")}
+*/
 
 select 
   id

@@ -8,4 +8,4 @@ config {
   }
 }
 
-select * from ${ref("stg__traffic__sources")}
+select * from ${ref("stg__traffic__sources")} 

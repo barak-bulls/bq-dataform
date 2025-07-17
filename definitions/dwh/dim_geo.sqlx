@@ -4,15 +4,7 @@ config {
   schema: "dwh_prod"
 }
 
-/*
-select
-  row_number() over() as id
-  ,domain as brand
-from (select distinct domain
-  from dwh_prod.dim_advertisers) a
-  */
-
- 
+/* 
 select
   row_number() over() + (select max(id) from ${self()}) as id
   ,offer_country_code as country_code
@@ -21,7 +13,25 @@ from (select distinct offer_country_code
   where not exists(
     select country_code from ${self()} sf where dvo.offer_country_code=sf.country_code
   )) a
+*/
 
+with b as(
+select offer_country_code as country_code
+  from mrr.dim_voluum_offers 
+union all 
+select  
+  case when country_code='UK' then 'GB' else country_code end country_code 
+from mrr.fact_south_segments)
+ 
+select
+  row_number() over() + (select max(id) from ${self()}) as id --${self()}
+  ,country_code
+  ,current_timestamp created_date
+from (select distinct country_code
+  from b
+  where not exists(
+    select country_code from ${self()} sf where b.country_code=sf.country_code
+  )) a
 
 
 

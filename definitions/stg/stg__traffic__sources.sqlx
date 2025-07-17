@@ -8,6 +8,7 @@ with a as (
     ,m.traffic_source_name as vol_ts_name
     ,t.id as general_ts_id
     ,d.usage
+    ,d.created_date
   from `mrr.traffic_sources` m  
     left outer join `dwh_prod.dim_vol_traffic_sources` d on m.traffic_source_name=d.vol_ts_name
     left outer join `dwh_prod.dim_traffic_sources` t on m.general_traffic_source_name=t.name)
@@ -18,7 +19,8 @@ with a as (
   select row_number() over() + (select max(id) from dwh_prod.dim_vol_traffic_sources) as id
     ,vol_ts_name
     ,general_ts_id
-    ,usage
+    ,usage --need to change to 'not set'
+    ,current_timestamp as created_date
   from a
   where id is null
 )

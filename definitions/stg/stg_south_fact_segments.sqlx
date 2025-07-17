@@ -1,0 +1,76 @@
+config {
+  type: "view",
+  schema: "stg",
+  dependencies: ["dirty_south"]
+}
+
+with seg as (select 
+  seg.date
+  ,null voluum_offer_name
+  ,seg.an_code
+  ,seg.adv_name
+  ,case when seg.adv_id='' then seg.adv_name||' (South)' else seg.adv_id end as adv_id --24/6/2025
+  ,dc_ws.workspace company_code
+  ,seg.country_code
+  ,dc_ts.gen_ts_name
+  ,dc_ts.os
+  ,dc_ts.connection
+  ,sum(seg.conversions) as conversions
+  ,sum(seg.cost) as cost
+  ,sum(seg.revenue) revenue
+  ,sum(seg.visits) visits
+from `mrr.fact_south_segments` seg 
+  left outer join `stg.stg_south_v5_decoding` dc_ts on os_ts_connection=dc_ts.segment_value and dc_ts.segment=2
+  left outer join `stg.stg_south_v5_decoding` dc_ws on seg.company_code=dc_ws.segment_value and dc_ws.segment=4
+where an_code !=''
+  --and adv_id != ''
+  and company_code !=''
+group by
+  seg.date
+  ,left(seg.voluum_offer_name,3)
+  ,seg.an_code
+  ,seg.adv_name
+  ,adv_id
+  ,dc_ws.workspace
+  ,seg.country_code
+  ,dc_ts.gen_ts_name
+  ,dc_ts.os
+  ,dc_ts.connection)
+
+select 
+  an.name || ' ' || split(comp.name,' ')[Offset(0)] || ' - ' || seg.country_code || ' - ' || seg.adv_name || ' - ' || seg.adv_id as vol_offer_id 
+  ,seg.conversions as vol_conversions
+  ,seg.cost
+  ,seg.date
+  ,'Mr.X ' || case when seg.gen_ts_name='GSM' then 'V2 Magic ' else '' end || 'South - ' || seg.gen_ts_name aux_vol_ts
+  ,seg.an_code as aux_vol_an
+  ,case when seg.adv_name like '%.%' then seg.adv_name else 'South Brands' end aux_brand
+  ,seg.revenue as vol_revenue
+  ,seg.visits
+  ,16 as voluumAccountId
+  ,seg.company_code as offerWorkspaceName
+  ,seg.os
+  ,seg.connection
+  ,an.name || ' ' || split(comp.name,' ')[Offset(0)] || ' - ' || seg.country_code || ' - ' || seg.adv_name || ' - ' || seg.adv_id as name
+  ,true as is_active
+  ,seg.country_code
+  ,adv.id as advertiser_id
+  ,comp.id as company_id
+  ,adv_id as aux_adv_an_id
+  ,an.id as aux_an_id
+  ,vts.id as vol_ts_id
+  ,geo.id as geo_id
+  ,(seg.an_code='ya') as cpc
+  ,o.id as offer_id
+  ,case when seg.gen_ts_name='GSM' then 'MagiMix' else 'mrx' end as usage
+from seg 
+  left outer join dwh_prod.affiliate_networks an using (an_code)
+  left outer join dwh_prod.dim_companies comp on seg.company_code=comp.workspace
+  left outer join ${ref("dim_advertisers")} adv on seg.adv_id=adv.an_advertiser_id and an.id=adv.an_id
+  left outer join `dwh_prod.dim_vol_traffic_sources` vts on 'Mr.X ' || case when seg.gen_ts_name='GSM' then 'V2 Magic ' else '' end || 'South - ' || seg.gen_ts_name=vts.vol_ts_name
+  left outer join ${ref("dim_geo")} geo using (country_code)
+  left outer join dwh_prod.dim_offers o on an.name || ' ' || split(comp.name,' ')[Offset(0)] || ' - ' || seg.country_code || ' - ' || seg.adv_name || ' - ' || seg.adv_id=o.name --update to prod
+where an.id is not null
+    and comp.id is not null
+
+

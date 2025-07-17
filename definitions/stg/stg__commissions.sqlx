@@ -14,7 +14,7 @@ select
   ,c.account
   ,acc.an_id
   ,e.value as exchange_rate
-  ,case when status in ('paid','confirmed') then c.updated_amount/e.value else c.original_amount/e.value end usd_amount
+  ,case when status in ('paid','confirmed','open') then c.updated_amount/e.value else c.original_amount/e.value end usd_amount
   ,case when c.account=6 then 'magic' when lower(acc.name) like '%cpc%' then 'cpc' else 'standard' end as usage
   ,cast(null as string) as an_offer_id
   ,case when c.status in ('paid','rejected') then current_date() else null end decision_date

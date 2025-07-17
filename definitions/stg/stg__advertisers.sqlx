@@ -3,13 +3,15 @@ config {
   schema: "stg"
 }
 
+/*
 with a as (
 select 
     adv.id
     ,ano.advertiser_id an_advertiser_id
     ,ano.an_id
     ,ano.name
-    ,br.id brand_id
+    ,case when ano.domain is null then 171117 else br.id end brand_id --12/6/2025 Maps to brand "Domain not specified"
+    ,adv.created_date
 from mrr.an_offers ano
   left outer join dwh_prod.dim_advertisers adv on adv.an_advertiser_id=ano.advertiser_id and adv.an_id=ano.an_id
   left outer join ${ref("dim__brands")} br on ano.domain=br.brand
@@ -23,6 +25,53 @@ qualify row_number() over (partition by ano.advertiser_id,ano.an_id)=1)
         ,an_id
         ,name
         ,brand_id
+        ,current_timestamp as created_date
+      from a
+      where id is null)
+
+select * from u union all select * from i
+*/
+
+with a as (
+  select 
+      adv.id
+      ,ano.advertiser_id an_advertiser_id
+      ,ano.an_id
+      ,ano.name
+      ,case when ano.domain is null then 171117 else br.id end brand_id --promote to prod. Maps to brand "Domain not specified"
+      ,adv.created_date
+  from mrr.an_offers ano
+    left outer join dwh_prod.dim_advertisers adv on adv.an_advertiser_id=ano.advertiser_id and adv.an_id=ano.an_id
+    left outer join ${ref("dim__brands")} br on ano.domain=br.brand
+  qualify row_number() over (partition by ano.advertiser_id,ano.an_id)=1
+
+  union all 
+
+  select distinct adv.id
+      ,s.adv_name || ' (South)' an_advertiser_id
+      ,an.id an_id
+      ,s.adv_name name
+      ,b.id brand_id
+      ,adv.created_date
+    from `mrr.fact_south_segments` s
+      inner join `dwh_prod.affiliate_networks` an using (an_code)
+      left outer join ${ref("dim__brands")} b on s.adv_name || ' (South)'=brand
+      left outer join dwh_prod.dim_advertisers adv on an.id=adv.an_id and s.adv_name || ' (South)'=adv.an_advertiser_id
+    where adv_id=''
+      and adv_name!=''
+      and an_code!=''
+      and company_code!=''
+)
+
+,u as (select * from a where id is not null) 
+
+,i as (select 
+        row_number() over()+(select max(id) from dwh_prod.dim_advertisers) as id
+        ,an_advertiser_id
+        ,an_id
+        ,name
+        ,brand_id
+        ,current_timestamp as created_date
       from a
       where id is null)
 

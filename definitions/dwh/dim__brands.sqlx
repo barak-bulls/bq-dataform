@@ -14,14 +14,15 @@ from (select distinct domain
 
  
 select
-  row_number() over() + (select max(id) from ${self()}) as id
+  row_number() over() + (select max(id) from ${self()}) as id 
   ,domain as brand
+  ,current_timestamp as created_date
 from (select distinct domain
   from mrr.an_offers ao
   where not exists(
     select brand from dwh_prod.dim__brands db where ao.domain=db.brand 
   )) a
-
+where domain is not null --12/6/2025; null domain gets id 171117 in stg_advertisers
 
 
 
