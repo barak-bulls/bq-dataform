@@ -1,11 +1,33 @@
 config {
   type: "incremental",
   uniqueKey: ["id"],
-  schema: "dwh_prod",
+  schema: "dwh",
   assertions: {
     uniqueKey: ["vol_ts_name"],
     nonNull: ["general_ts_id"]
   }
 }
 
-select * from ${ref("stg__traffic__sources")} 
+with a as (
+  select d.id
+    ,m.traffic_source_name as vol_ts_name
+    ,t.id as general_ts_id
+    ,d.usage
+    ,d.created_date
+  from `mrr.traffic_sources` m  
+    left outer join ${self()} d on m.traffic_source_name=d.vol_ts_name
+    left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_traffic_sources` t on m.general_traffic_source_name=t.name)
+
+,u as (select * from a where id is not null)
+
+,i as (
+  select row_number() over() + (select max(id) from ${self()}) as id
+    ,vol_ts_name
+    ,general_ts_id
+    ,usage --need to change to 'not set'
+    ,current_timestamp as created_date
+  from a
+  where id is null
+)
+
+select * from u union all select * from i

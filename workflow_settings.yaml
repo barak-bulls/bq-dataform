@@ -1,5 +1,9 @@
 defaultProject: bm-bigquery
 defaultLocation: europe-west4
-defaultDataset: staging
+defaultDataset: stg
 defaultAssertionDataset: dataform_assertions
 dataformCoreVersion: 3.0.0
+datasetSuffix: prod
+vars:
+    dwh_schema: "dwh_prod"
+    stg_schema: "stg_prod"

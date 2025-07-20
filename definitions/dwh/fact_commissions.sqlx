@@ -5,7 +5,7 @@ config {
     assertions: {
     nonNull: ["an_id"]
   },  
-  schema: "dwh_prod"
+  schema: "dwh"
 }
 
 select * from ${ref("stg__commissions")}

@@ -1,17 +1,8 @@
 config {
   type: "incremental",
   uniqueKey: ["brand"],
-  schema: "dwh_prod"
+  schema: "dwh"
 }
-
-/*
-select
-  row_number() over() as id
-  ,domain as brand
-from (select distinct domain
-  from dwh_prod.dim_advertisers) a
-  */
-
  
 select
   row_number() over() + (select max(id) from ${self()}) as id 
@@ -20,7 +11,7 @@ select
 from (select distinct domain
   from mrr.an_offers ao
   where not exists(
-    select brand from dwh_prod.dim__brands db where ao.domain=db.brand 
+    select brand from ${self()} db where ao.domain=db.brand 
   )) a
 where domain is not null --12/6/2025; null domain gets id 171117 in stg_advertisers
 

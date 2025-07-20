@@ -1,7 +1,7 @@
 config {
   type: "incremental",
   uniqueKey: ["id"],
-  schema: "dwh_prod",
+  schema: "dwh",
   assertions: {
     uniqueKey:["vol_offer_id","jv_id"]
   }

@@ -1,7 +1,7 @@
 config {
   type: "incremental",
   uniqueKey: ["id"],
-  schema: "pre_prod",
+  schema: "dwh",
   assertions: {
     uniqueKey: ["offer_id","date","vol_ts_id","os","connection","scd_jv_id"],
     nonNull: ["offer_id","date","vol_ts_id","os","connection","scd_jv_id"]

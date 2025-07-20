@@ -1,7 +1,7 @@
 config {
   type: "view",
   schema: "stg",
-  dependencies: ["dwh_prod_dim_vol_traffic_sources_assertions_rowConditions","dwh_prod_dim_vol_traffic_sources_assertions_uniqueKey_0","an_dictionary"]
+  dependencies: ["dwh_dim_vol_traffic_sources_assertions_rowConditions","dwh_dim_vol_traffic_sources_assertions_uniqueKey_0","an_dictionary"]
 }
 
 select 
@@ -33,13 +33,13 @@ select
 
 from mrr.segments seg
   left outer join `mrr.dim_voluum_offers` dvo using(offerId,voluumAccountId)
-  left outer join `stg.an_dictionary`dict on seg.AffNetwork=dict.affnetwork
+  left outer join `${dataform.projectConfig.vars.stg_schema}.an_dictionary`dict on seg.AffNetwork=dict.affnetwork
   left outer join ${ref("dim_advertisers")} adv on 
     dvo.an_offer_id=adv.an_advertiser_id and dict.service_credential_type_id=adv.an_id
-  left outer join `dwh_prod.dim_companies` com on seg.offerWorkspaceName=com.workspace
+  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_companies` com on seg.offerWorkspaceName=com.workspace
   left outer join ${ref("dim_geo")} geo on dvo.offer_country_code=geo.country_code
-  left outer join `dwh_prod.dim_offers` pdo on seg.offerId=pdo.vol_offer_id and seg.voluumAccountId=pdo.jv_id --adjust to prod
-  left outer join `dwh_prod.dim_vol_traffic_sources` vts on seg.trafficSource=vts.vol_ts_name
+  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_offers` pdo on seg.offerId=pdo.vol_offer_id and seg.voluumAccountId=pdo.jv_id --adjust to prod
+  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_vol_traffic_sources` vts on seg.trafficSource=vts.vol_ts_name
 
 
 where 
@@ -57,58 +57,3 @@ where
 union all
 
 select * from ${ref("stg_south_fact_segments")}
-
-/*
-config {
-  type: "view",
-  schema: "stg",
-  dependencies: ["dwh_prod_dim_vol_traffic_sources_assertions_rowConditions","dwh_prod_dim_vol_traffic_sources_assertions_uniqueKey_0","an_dictionary"]
-}
-
-select 
-  dvo.offerId as vol_offer_id
-  ,seg.vol_conversions
-  ,seg.cost
-  ,seg.date
-  ,seg.trafficSource aux_vol_ts
-  ,seg.AffNetwork aux_vol_an
-  ,seg.brand aux_brand
-  ,seg.vol_revenue
-  ,seg.clicks visits
-  ,seg.voluumAccountId
-  ,seg.offerWorkspaceName
-  ,seg.os
-  ,seg.connection
-  ,dvo.offerName as name
-  ,(dvo.offer_status='active') is_active
-  ,dvo.offer_country_code as country_code
-  ,adv.id advertiser_id
-  ,com.id company_id
-  ,dvo.an_offer_id aux_adv_an_id
-  ,dict.service_credential_type_id aux_an_id
-  ,vts.id vol_ts_id
-  ,geo.id geo_id
-  ,(lower(seg.affnetwork) like '%cpc%' OR lower(dvo.offerName) like '%cpc%') is_cpc
-  ,pdo.id as offer_id
-  ,vts.usage
-
-from mrr.segments seg
-  left outer join `mrr.dim_voluum_offers` dvo using(offerId,voluumAccountId)
-  left outer join `stg.an_dictionary`dict on seg.AffNetwork=dict.affnetwork
-  left outer join ${ref("dim_advertisers")} adv on 
-    dvo.an_offer_id=adv.an_advertiser_id and dict.service_credential_type_id=adv.an_id
-  left outer join `dwh_prod.dim_companies` com on seg.offerWorkspaceName=com.workspace
-  left outer join ${ref("dim_geo")} geo on dvo.offer_country_code=geo.country_code
-  left outer join `dwh_prod.dim_offers` pdo on seg.offerId=pdo.vol_offer_id and seg.voluumAccountId=pdo.jv_id 
-  left outer join `dwh_prod.dim_vol_traffic_sources` vts on seg.trafficSource=vts.vol_ts_name
-
-
-where 
-  lower(dvo.offerName) not like '%cpc%' 
-  and lower(dvo.offerName) not like 'global%' 
-  and dvo.offerName not like '%MGC%'
-  and dvo.offerName not like 'MReX%'
-  and lower(seg.AffNetwork) not like '%mgc%' 
-  and lower(seg.trafficSource) not like '%mgc%'
-  and lower(seg.trafficSource) not like '%test%'
-*/

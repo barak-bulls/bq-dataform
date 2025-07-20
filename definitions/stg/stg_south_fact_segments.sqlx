@@ -20,8 +20,8 @@ with seg as (select
   ,sum(seg.revenue) revenue
   ,sum(seg.visits) visits
 from `mrr.fact_south_segments` seg 
-  left outer join `stg.stg_south_v5_decoding` dc_ts on os_ts_connection=dc_ts.segment_value and dc_ts.segment=2
-  left outer join `stg.stg_south_v5_decoding` dc_ws on seg.company_code=dc_ws.segment_value and dc_ws.segment=4
+  left outer join `${dataform.projectConfig.vars.stg_schema}.stg_south_v5_decoding` dc_ts on os_ts_connection=dc_ts.segment_value and dc_ts.segment=2
+  left outer join `${dataform.projectConfig.vars.stg_schema}.stg_south_v5_decoding` dc_ws on seg.company_code=dc_ws.segment_value and dc_ws.segment=4
 where an_code !=''
   --and adv_id != ''
   and company_code !=''
@@ -64,12 +64,12 @@ select
   ,o.id as offer_id
   ,case when seg.gen_ts_name='GSM' then 'MagiMix' else 'mrx' end as usage
 from seg 
-  left outer join dwh_prod.affiliate_networks an using (an_code)
-  left outer join dwh_prod.dim_companies comp on seg.company_code=comp.workspace
+  left outer join ${dataform.projectConfig.vars.dwh_schema}.affiliate_networks an using (an_code)
+  left outer join ${dataform.projectConfig.vars.dwh_schema}.dim_companies comp on seg.company_code=comp.workspace
   left outer join ${ref("dim_advertisers")} adv on seg.adv_id=adv.an_advertiser_id and an.id=adv.an_id
-  left outer join `dwh_prod.dim_vol_traffic_sources` vts on 'Mr.X ' || case when seg.gen_ts_name='GSM' then 'V2 Magic ' else '' end || 'South - ' || seg.gen_ts_name=vts.vol_ts_name
+  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_vol_traffic_sources` vts on 'Mr.X ' || case when seg.gen_ts_name='GSM' then 'V2 Magic ' else '' end || 'South - ' || seg.gen_ts_name=vts.vol_ts_name
   left outer join ${ref("dim_geo")} geo using (country_code)
-  left outer join dwh_prod.dim_offers o on an.name || ' ' || split(comp.name,' ')[Offset(0)] || ' - ' || seg.country_code || ' - ' || seg.adv_name || ' - ' || seg.adv_id=o.name --update to prod
+  left outer join ${dataform.projectConfig.vars.dwh_schema}.dim_offers o on an.name || ' ' || split(comp.name,' ')[Offset(0)] || ' - ' || seg.country_code || ' - ' || seg.adv_name || ' - ' || seg.adv_id=o.name --update to prod
 where an.id is not null
     and comp.id is not null
 

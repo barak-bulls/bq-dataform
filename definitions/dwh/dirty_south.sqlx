@@ -35,7 +35,7 @@ select
   ,'blocked' as resolution
   
 from `mrr.fact_south_segments` seg
-  left outer join dwh_prod.affiliate_networks an using (an_code)
+  left outer join ${dataform.projectConfig.vars.dwh_schema}.affiliate_networks an using (an_code)
   where an.id is null
 
 union all
@@ -53,7 +53,7 @@ select
   ,'blocked' as resolution
   
 from `mrr.fact_south_segments` seg
-  left outer join stg.stg_south_v5_decoding on company_code=segment_value and segment=4
+  left outer join ${dataform.projectConfig.vars.stg_schema}.stg_south_v5_decoding on company_code=segment_value and segment=4
   where segment_value is null
 
 union all
@@ -71,6 +71,6 @@ select
   ,'warning' as resolution
   
 from `mrr.fact_south_segments` seg
-  inner join dwh_prod.affiliate_networks an using (an_code)
+  inner join ${dataform.projectConfig.vars.dwh_schema}.affiliate_networks an using (an_code)
   left outer join ${ref("dim_advertisers")} adv on seg.adv_id=adv.an_advertiser_id and an.id=adv.an_id
   where adv_id!='' and adv.id is null
