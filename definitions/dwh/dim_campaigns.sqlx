@@ -1,0 +1,23 @@
+config {
+  type: "incremental",
+  uniqueKey: ["vol_id"],
+  schema: "dwh"
+}
+ 
+select
+  row_number() over() + (select max(id) from ${self()}) as id, 
+    *,
+    current_timestamp as created_date
+from (
+  select 
+    campaign_name as name,
+    case when comp.id is null then 1 else comp.id end as company_id,
+    null as workspace_id,
+    campaign_id as vol_id,
+  FROM `bm-bigquery.mrr.segments_with_campaigns`  swc
+    left join `${dataform.projectConfig.vars.dwh_schema}.dim_companies` comp on swc.offer_workspace_name=comp.workspace
+    left join ${self()} cmp on swc.campaign_id=cmp.vol_id
+    where vol_id is null
+  --where voluum_account_id not in (5,6,10,12,16) --Jojo, Magic, LY7, Golf Tiger, South
+  qualify row_number() over (partition by campaign_id order by date desc)=1
+  ) a

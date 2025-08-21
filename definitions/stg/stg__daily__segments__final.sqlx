@@ -3,82 +3,6 @@ config {
   schema: "stg",
   dependencies: ["dwh_dim_offers_assertions_uniqueKey_0"]
 }
-/*
-with a as (select * from `dwh_prod.fact_daily_segments` where date>=current_date()-30)
-
-,b as (
-  select 
-    fds.id
-    ,sds.*
-  from `bm-bigquery.stg.stg__daily__segments` sds
-    left outer join a fds on
-      sds.vol_offer_id=fds.offerId
-      and sds.voluumAccountId=fds.scd_jv_id
-      and sds.aux_vol_ts=fds.aux_vol_ts
-      and fds.date=sds.date
-      and fds.os=sds.os
-      and fds.connection=sds.connection)
-
-,u as (
-  select
-    vol_offer_id as offerId
-    ,vol_conversions
-    ,cost
-    ,date
-    ,aux_vol_ts
-    ,cast(null as string) as AffNetwork
-    ,cast(null as string) as Channel
-    ,cast(null as string) as brand
-    ,cast(null as string) as geo
-    ,vol_revenue
-    ,visits
-    ,voluumAccountId as scd_jv_id
-    ,offerWorkspaceName as scd_ws_name
-    ,os
-    ,connection
-    ,cast(null as string) as vol_offer_key
-    ,null as an_id
-    ,usage
-    ,cast(null as string) as traffic_source
-    ,offer_id
-    ,id
-    ,vol_ts_id
-    ,geo_id
-  
-  from b
-  where id is not null)
-
-,i as (
-  select
-    vol_offer_id as offerId
-    ,vol_conversions
-    ,cost
-    ,date
-    ,aux_vol_ts
-    ,cast(null as string) as AffNetwork
-    ,cast(null as string) as Channel
-    ,cast(null as string) as brand
-    ,cast(null as string) as geo
-    ,vol_revenue
-    ,visits
-    ,voluumAccountId as scd_jv_id
-    ,offerWorkspaceName as scd_ws_name
-    ,os
-    ,connection
-    ,cast(null as string) as vol_offer_key
-    ,null as an_id
-    ,usage
-    ,cast(null as string) as traffic_source
-    ,offer_id
-    ,row_number() over() + (select max(id) from `dwh_prod.fact_daily_segments`) as id
-    ,vol_ts_id
-    ,geo_id
-  
-  from b
-  where id is null)
-
-select * from u union all select * from i
-*/
 
 with a as (select * from `${dataform.projectConfig.vars.dwh_schema}.fact_daily_segments`) --where date>=current_date()-30) -- adjust to prod
   --dependencies: ["dwh_prod_dim_offers_assertions_uniqueKey_0"], 
@@ -93,7 +17,8 @@ with a as (select * from `${dataform.projectConfig.vars.dwh_schema}.fact_daily_s
       and sds.aux_vol_ts=fds.aux_vol_ts
       and fds.date=sds.date
       and fds.os=sds.os
-      and fds.connection=sds.connection)
+      and fds.connection=sds.connection
+      and fds.campaign_id=sds.campaign_id)
 
 ,u as (
   select
@@ -120,7 +45,8 @@ with a as (select * from `${dataform.projectConfig.vars.dwh_schema}.fact_daily_s
     ,id
     ,vol_ts_id
     ,geo_id
-  
+    ,campaign_id
+
   from b
   where id is not null)
 
@@ -146,9 +72,10 @@ with a as (select * from `${dataform.projectConfig.vars.dwh_schema}.fact_daily_s
     ,usage
     ,cast(null as string) as traffic_source
     ,offer_id
-    ,row_number() over() + (select max(id) from `dwh_prod.fact_daily_segments`) as id
+    ,row_number() over() + (select max(id) from `${dataform.projectConfig.vars.dwh_schema}.fact_daily_segments`) as id
     ,vol_ts_id
     ,geo_id
+    ,campaign_id
   
   from b
   where id is null)

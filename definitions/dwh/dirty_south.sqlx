@@ -74,3 +74,22 @@ from `mrr.fact_south_segments` seg
   inner join ${dataform.projectConfig.vars.dwh_schema}.affiliate_networks an using (an_code)
   left outer join ${ref("dim_advertisers")} adv on seg.adv_id=adv.an_advertiser_id and an.id=adv.an_id
   where adv_id!='' and adv.id is null
+
+
+union all
+
+select   
+  'traffic source code not recognized' as failing_condition
+  ,seg.date
+  ,seg.voluum_offer_name
+  ,seg.an_code
+  ,seg.adv_name
+  ,seg.adv_id
+  ,seg.company_code
+  ,seg.country_code
+  ,seg.os_ts_connection
+  ,'blocked' as resolution
+  
+from `mrr.fact_south_segments` seg
+  inner join ${dataform.projectConfig.vars.stg_schema}.stg_south_v5_decoding dcd on seg.os_ts_connection=dcd.segment_value and dcd.segment=2
+  where os!='' and os is null

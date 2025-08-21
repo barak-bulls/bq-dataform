@@ -1,0 +1,13 @@
+config {
+  type: "view",
+  schema: "stg"
+}
+
+select 
+    'service credentials not recognized' as failing_condition,
+    c.*,
+    'blocked' as resolution
+from mrr.commissions c
+    left outer join `${dataform.projectConfig.vars.stg_schema}.stg__accounts_native` acc on c.account=acc.id
+where acc.id is null
+

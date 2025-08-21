@@ -25,4 +25,5 @@ from `mrr.commissions` c
   left outer join `${dataform.projectConfig.vars.stg_schema}.stg__accounts_native` acc on c.account=acc.id
   left outer join ${ref("dim_advertisers")} a on   
     c.adv_id=a.an_advertiser_id
-    and acc.an_id=a.an_id 
+  and acc.an_id=a.an_id 
+where acc.id is not null

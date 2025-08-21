@@ -3,7 +3,7 @@ config {
   uniqueKey: ["id"],
   schema: "dwh",
   assertions: {
-    uniqueKey: ["offer_id","date","vol_ts_id","os","connection","scd_jv_id"],
+    uniqueKey: ["offer_id","date","vol_ts_id","os","connection","scd_jv_id","campaign_id"],
     nonNull: ["offer_id","date","vol_ts_id","os","connection","scd_jv_id"]
   }  
 }

@@ -1,7 +1,7 @@
 config {
   type: "view",
   schema: "stg",
-  dependencies: ["dwh_dim_vol_traffic_sources_assertions_rowConditions","dwh_dim_vol_traffic_sources_assertions_uniqueKey_0","an_dictionary"]
+  dependencies: ["dwh_dim_vol_traffic_sources_assertions_rowConditions","dwh_dim_vol_traffic_sources_assertions_uniqueKey_0","an_dictionary","dim_campaigns"]
 }
 
 select 
@@ -9,13 +9,13 @@ select
   ,seg.vol_conversions
   ,seg.cost
   ,seg.date
-  ,seg.trafficSource aux_vol_ts
-  ,seg.AffNetwork aux_vol_an
-  ,seg.brand aux_brand
+  ,seg.traffic_source aux_vol_ts
+  ,seg.aff_network aux_vol_an
+  ,null aux_brand
   ,seg.vol_revenue
   ,seg.clicks visits
-  ,seg.voluumAccountId
-  ,seg.offerWorkspaceName
+  ,seg.voluum_account_id voluumAccountId
+  ,seg.offer_workspace_name offerWorkspaceName
   ,seg.os
   ,seg.connection
   ,dvo.offerName as name
@@ -27,19 +27,21 @@ select
   ,dict.service_credential_type_id aux_an_id
   ,vts.id vol_ts_id
   ,geo.id geo_id
-  ,(lower(seg.affnetwork) like '%cpc%' OR lower(dvo.offerName) like '%cpc%') is_cpc
+  ,(lower(seg.aff_network) like '%cpc%' OR lower(dvo.offerName) like '%cpc%') is_cpc
   ,pdo.id as offer_id
   ,vts.usage
+  ,case when cmp.id is null then -1 else cmp.id end campaign_id
 
-from mrr.segments seg
-  left outer join `mrr.dim_voluum_offers` dvo using(offerId,voluumAccountId)
-  left outer join `${dataform.projectConfig.vars.stg_schema}.an_dictionary`dict on seg.AffNetwork=dict.affnetwork
+from mrr.segments_with_campaigns seg
+  left outer join `mrr.dim_voluum_offers` dvo on seg.offer_id=dvo.offerId and seg.voluum_account_id=dvo.voluumAccountId --using(offerId,voluumAccountId)
+  left outer join `${dataform.projectConfig.vars.stg_schema}.an_dictionary`dict on seg.aff_network=dict.affnetwork
   left outer join ${ref("dim_advertisers")} adv on 
     dvo.an_offer_id=adv.an_advertiser_id and dict.service_credential_type_id=adv.an_id
-  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_companies` com on seg.offerWorkspaceName=com.workspace
+  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_companies` com on seg.offer_workspace_name=com.workspace
   left outer join ${ref("dim_geo")} geo on dvo.offer_country_code=geo.country_code
-  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_offers` pdo on seg.offerId=pdo.vol_offer_id and seg.voluumAccountId=pdo.jv_id --adjust to prod
-  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_vol_traffic_sources` vts on seg.trafficSource=vts.vol_ts_name
+  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_offers` pdo on seg.offer_id=pdo.vol_offer_id and seg.voluum_account_id=pdo.jv_id --adjust to prod
+  left outer join `${dataform.projectConfig.vars.dwh_schema}.dim_vol_traffic_sources` vts on seg.traffic_source=vts.vol_ts_name
+  left outer join ${dataform.projectConfig.vars.dwh_schema}.dim_campaigns cmp on seg.campaign_id=cmp.vol_id 
 
 
 where 
@@ -47,11 +49,13 @@ where
   and lower(dvo.offerName) not like 'global%' 
   and dvo.offerName not like '%MGC%'
   and dvo.offerName not like 'MReX%'
-  and lower(seg.AffNetwork) not like '%mgc%' 
-  and lower(seg.trafficSource) not like '%mgc%'
-  and lower(seg.trafficSource) not like '%test%'
+  and lower(seg.aff_network) not like '%mgc%' 
+  and lower(seg.traffic_source) not like '%mgc%'
+  and lower(seg.traffic_source) not like '%test%'
   and lower(dvo.offerName) not like '%mgmx%'
   and voluumAccountId!=16
+  
+  and vts.id is not null
 
 
 union all

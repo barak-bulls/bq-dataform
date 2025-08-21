@@ -25,6 +25,7 @@ from `mrr.fact_south_segments` seg
 where an_code !=''
   --and adv_id != ''
   and company_code !=''
+  and dc_ts.os is not null
 group by
   seg.date
   ,left(seg.voluum_offer_name,3)
@@ -63,6 +64,7 @@ select
   ,(seg.an_code='ya') as cpc
   ,o.id as offer_id
   ,case when seg.gen_ts_name='GSM' then 'MagiMix' else 'mrx' end as usage
+  ,-1 campaign_id
 from seg 
   left outer join ${dataform.projectConfig.vars.dwh_schema}.affiliate_networks an using (an_code)
   left outer join ${dataform.projectConfig.vars.dwh_schema}.dim_companies comp on seg.company_code=comp.workspace
@@ -72,5 +74,6 @@ from seg
   left outer join ${dataform.projectConfig.vars.dwh_schema}.dim_offers o on an.name || ' ' || split(comp.name,' ')[Offset(0)] || ' - ' || seg.country_code || ' - ' || seg.adv_name || ' - ' || seg.adv_id=o.name --update to prod
 where an.id is not null
     and comp.id is not null
+
 
 

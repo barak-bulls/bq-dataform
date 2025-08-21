@@ -1,0 +1,13 @@
+config {
+  type: "view",
+  schema: "stg"
+}
+
+select 
+    'traffic source not recognized' as failing_condition,
+    seg.*,
+    'blocked' as resolution
+from mrr.segments_with_campaigns seg
+    left join ${dataform.projectConfig.vars.dwh_schema}.dim_vol_traffic_sources dts on seg.traffic_source=dts.vol_ts_name
+where dts.general_ts_id is null
+  and voluum_account_id!=6
