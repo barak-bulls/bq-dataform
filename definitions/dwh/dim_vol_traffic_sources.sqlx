@@ -12,7 +12,7 @@ with a as (
   select d.id
     ,m.traffic_source_name as vol_ts_name
     ,t.id as general_ts_id
-    ,d.usage
+    ,m.usage
     ,d.created_date
   from `mrr.traffic_sources` m  
     left outer join ${self()} d on m.traffic_source_name=d.vol_ts_name
@@ -29,5 +29,6 @@ with a as (
   from a
   where id is null
 )
+
 
 select * from u union all select * from i
