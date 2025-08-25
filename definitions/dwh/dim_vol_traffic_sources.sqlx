@@ -30,4 +30,5 @@ with a as (
   where id is null
 )
 
+
 select * from u union all select * from i
