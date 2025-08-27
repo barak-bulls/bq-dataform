@@ -6,7 +6,7 @@ config {
 with piv as (
   select *
   from
-  (SELECT date, date_diff(date, current_date(), DAY) as days_before, advertiser_id,an_id, status, count(*) as clicks, sum(usd_amount) as usd_amount FROM `bm-bigquery.dwh_prod.fact_commissions` GROUP BY date, advertiser_id, status,an_id)
+  (SELECT date, date_diff(date, current_date(), DAY) as days_before, advertiser_id,an_id, status, count(*) as clicks, sum(usd_amount) as usd_amount FROM ${dataform.projectConfig.vars.dwh_schema}.fact_commissions GROUP BY date, advertiser_id, status,an_id)
   pivot(sum(clicks) as clicks, sum(usd_amount) usd for status in ('paid','rejected','confirmed','open'))
   where advertiser_id is not null
 )
