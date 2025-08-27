@@ -15,13 +15,14 @@ This project manages the dataform for P-Com Bigquery DWH
 1. In BQ, Copy dataset dwh_prod to dwh_pre and stg_prod to stg_pre
 2. Copy table dim_campaigns from dwh_test to dwh_pre
 3. Add integer column fact_daily_segments.campaign_id to dwh_pre 
-4. Add integer column dim_offers.company_id
+4. same for fact_daily_segments_pre
 
 ## Data
 
 5. Set fact_daily_segments.campaign_id to -1
 6. Update column dim_offers.company_id test merging on vol_offer_id and jv_id
 7. Check the earliest date in mrr.segments_with_campaigns and delete all records from dwh_pre.fact_daily_segments starting this date (except sc_jv_id=16)
+    - truncate fact_daily_segments_pre and insert from fact_daily_segments
 
 ## Upgrade Dataform
 
