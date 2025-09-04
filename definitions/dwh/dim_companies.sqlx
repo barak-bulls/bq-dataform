@@ -1,0 +1,19 @@
+config {
+  type: "incremental",
+  uniqueKey: ["id"],
+  schema: "dwh"
+}
+
+--with a as 
+
+  select m.id
+    ,m.company_short_name as key   
+    ,m.company_name as name
+    ,d.workspace
+    ,m.voluum_id as jv_id   
+    ,d.south_code
+  from mrr.companies m
+    left join ${self()} d using (id) 
+
+
+
