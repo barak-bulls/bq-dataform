@@ -1,7 +1,7 @@
 config {
   type: "view",
   schema: "stg",
-  dependencies: ["dwh_dim_vol_traffic_sources_assertions_rowConditions","dwh_dim_vol_traffic_sources_assertions_uniqueKey_0","an_dictionary","dim_campaigns"]
+  dependencies: ["dwh_dim_vol_traffic_sources_assertions_rowConditions","dwh_dim_vol_traffic_sources_assertions_uniqueKey_0","an_dictionary","dim_campaigns","dim_companies"]
 }
 
 select 
