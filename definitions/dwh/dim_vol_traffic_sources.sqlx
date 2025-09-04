@@ -24,7 +24,7 @@ with a as (
   select row_number() over() + (select max(id) from ${self()}) as id
     ,vol_ts_name
     ,general_ts_id
-    ,usage --need to change to 'not set'
+    ,usage
     ,current_timestamp as created_date
   from a
   where id is null

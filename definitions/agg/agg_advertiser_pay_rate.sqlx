@@ -4,37 +4,44 @@ config {
   tags: ["trigger"]
 }
 
+--1. Pay rate is calculated only for advertisers 10 conversions or more
+--2. Find how much is 75% of paid clicks for this advertiser
 with gt10clicks as (
-  select advertiser_id, max(cum_paid_clicks)*0.75 paid_clicks
+  select advertiser_id, max(cum_paid_clicks)*0.75 paid_clicks --Implements 2
   from ${ref("agg_advertiser_daily_commissions")} dc
   group by advertiser_id
-  having max(cum_paid_clicks)>9)
+  having max(cum_paid_clicks)>9) --Implements 1
 
+--1. Finds the date where 75% of the paid clicks occur are already paid 
+--2. Calculates Pay Rate (Paid/(Paid+Rjected)) at this date in terms of conversion count
+--3. Same in term of USD
 ,pr75 as (
   select 
     advertiser_id
     , date
-    , cum_paid_clicks/(cum_paid_clicks+cum_rejected_clicks) pr_clicks_75
+    , cum_paid_clicks/(cum_paid_clicks+cum_rejected_clicks) pr_clicks_75 --Implements 2
     , case when cum_paid_usd=0 then 0 else
-        cum_paid_usd/(cum_paid_usd+cum_rejected_usd) end pr_usd_75
+        cum_paid_usd/(cum_paid_usd+cum_rejected_usd) end pr_usd_75 --Implements 3
   from gt10clicks g
     inner join ${ref("agg_advertiser_daily_commissions")} dc using (advertiser_id)
-  where dc.cum_paid_clicks>=g.paid_clicks
+  where dc.cum_paid_clicks>=g.paid_clicks --Implements 1
   qualify row_number() over (partition by advertiser_id order by date)=1)
 
+--Calaulates for each month after pr_75 (a) the rate of non-rejection in terms of conversion count (b) and USD (c)
 ,late_monthly as (
   select advertiser_id
     , last_day(dc.date,MONTH) eMonth
-    , 1-sum(clicks_rejected)/sum(clicks_total) clicks_month_potential
+    , 1-sum(clicks_rejected)/sum(clicks_total) clicks_month_potential --Implements b
     , case when sum(usd_total)=0 then 0 else  
-        1-sum(usd_rejected)/sum(usd_total) end usd_month_potential
+        1-sum(usd_rejected)/sum(usd_total) end usd_month_potential --Implements c
   from ${ref("agg_advertiser_daily_commissions")} dc
     inner join pr75 using (advertiser_id)
   where dc.date>last_day(pr75.date,MONTH)
-    and dc.date<date_trunc(current_date(), MONTH)
+    and dc.date<date_trunc(current_date(), MONTH) --Implements a
   group by advertiser_id,last_day(dc.date,MONTH)
   having sum(clicks_total)>9)
 
+--Finds the lowest non-rejection rate for late months
 ,late_adv as (
   select advertiser_id
     , min(clicks_month_potential) clicks_month_potential
