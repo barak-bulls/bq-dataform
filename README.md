@@ -20,7 +20,9 @@ This project manages the dataform for P-Com Bigquery DWH
 ## Data
 
 5. Set fact_daily_segments.campaign_id to -1
-6. Update column dim_offers.company_id test merging on vol_offer_id and jv_id
+-- Update column dim_offers.company_id test merging on vol_offer_id and jv_id
+6. Truncate table mrr.segments_with_campaigns  
+   - In Jupyter Notebook, run V1 Upgrade --> Initial load to segments_with_campaigns table
 7. Check the earliest date in mrr.segments_with_campaigns and delete all records from dwh_pre.fact_daily_segments starting this date (except sc_jv_id=16)
     - truncate fact_daily_segments_pre and insert from fact_daily_segments
 

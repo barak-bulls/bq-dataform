@@ -1,0 +1,38 @@
+config {
+  type: "view",
+  schema: "dwh",
+  tags: ["upgrade"]
+}
+
+select fds.date
+  , networks.name            as affiliate_name
+  , comp.name                as voluum_workspace
+  , ts.name                  as traffic_source
+  , offers.name              as offer_name
+  , case when br.brand <> 'Domain Not Specified' and br.brand is not null then br.brand
+         when adv.name is not null then adv.name
+         else offers.name end as advertiser
+  , adv.an_id 
+  , jvs.name                 as jv_name  
+  , offers.is_active         as offer_status
+  , comp.key                 as company_key
+  , geo.country_code         as geo
+  , campaign.name            as campaign_name
+  , coalesce(vts.usage, 'Regular Traffic')  as usage
+  , sum(fds.cost)            as cost
+  , sum(fds.vol_revenue)     as revenue
+  , sum(fds.vol_conversions) as conversions
+  , sum(visits)              as visits
+from `${dataform.projectConfig.vars.dwh_schema}.fact_daily_segments` fds
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_offers` offers on fds.offer_id = offers.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_vol_traffic_sources` vts on fds.vol_ts_id=vts.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_traffic_sources` ts on vts.general_ts_id=ts.id
+left join ${dataform.projectConfig.vars.dwh_schema}.dim_geo geo on fds.geo_id = geo.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_companies` comp on offers.company_id=comp.id 
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_jvs` jvs on offers.jv_id = jvs.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_advertisers` adv on offers.advertiser_id = adv.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim__brands` br on adv.brand_id = br.id
+left join `${dataform.projectConfig.vars.dwh_schema}.affiliate_networks` networks on offers.aux_an_id=networks.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_campaigns` campaign on fds.campaign_id=campaign.id
+where vts.usage = 'MagiMix' and jvs.id <>16 --filtering out South
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13
