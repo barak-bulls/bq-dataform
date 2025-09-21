@@ -1,0 +1,34 @@
+config {
+  type: "view",
+  schema: "dwh",
+  tags: ["upgrade"]
+}
+
+select fds.os
+  , fds.connection
+  , networks.name            as affiliate_name
+  , ts.name                  as traffic_source
+  , adv.id                   as advertiser_id
+  , adv.name                 as advertiser_name
+  , jvs.id                   as voluum_account_id
+  , jvs.name                 as voluum_account
+--  , geo.country_code         as offer_country_code
+--  , comp.name                as company
+  , adv.an_advertiser_id
+  , coalesce(vts.usage, 'Regular Traffic')  as usage
+  , sum(fds.cost)            as cost
+  , sum(fds.vol_revenue)     as revenue
+  , sum(fds.vol_conversions) as conversions
+  , sum(visits)              as visits
+  , min(date)                as date
+from `${dataform.projectConfig.vars.dwh_schema}.fact_daily_segments` fds
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_offers` offers on fds.offer_id = offers.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_vol_traffic_sources` vts on fds.vol_ts_id=vts.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_traffic_sources` ts on vts.general_ts_id=ts.id
+left join `${dataform.projectConfig.vars.dwh_schema}.affiliate_networks` networks on offers.aux_an_id=networks.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_advertisers` adv on offers.advertiser_id = adv.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_jvs` jvs on offers.jv_id = jvs.id
+--left join `${dataform.projectConfig.vars.dwh_schema}.dim_geo` geo on fds.geo_id = geo.id
+--left join `${dataform.projectConfig.vars.dwh_schema}.dim_companies` comp on offers.company_id=comp.id
+where fds.date >=DATE_SUB(CURRENT_DATE(), INTERVAL 60 DAY) 
+group by 1,2,3,4,5,6,7,8,9,10--,11,12
