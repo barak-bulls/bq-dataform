@@ -3,7 +3,7 @@ defaultLocation: europe-west4
 defaultDataset: stg
 defaultAssertionDataset: dataform_assertions
 dataformCoreVersion: 3.0.0
-datasetSuffix: test
+datasetSuffix: pre
 vars:
-    dwh_schema: "dwh_test"
-    stg_schema: "stg_test"
+    dwh_schema: "dwh_pre"
+    stg_schema: "stg_pre"

@@ -12,7 +12,7 @@ select fds.os
   , adv.name                 as advertiser_name
   , jvs.id                   as voluum_account_id
   , jvs.name                 as voluum_account
---  , geo.country_code         as offer_country_code
+  , geo.country_code         as offer_country_code
 --  , comp.name                as company
   , adv.an_advertiser_id
   , coalesce(vts.usage, 'Regular Traffic')  as usage
@@ -28,7 +28,7 @@ left join `${dataform.projectConfig.vars.dwh_schema}.dim_traffic_sources` ts on 
 left join `${dataform.projectConfig.vars.dwh_schema}.affiliate_networks` networks on offers.aux_an_id=networks.id
 left join `${dataform.projectConfig.vars.dwh_schema}.dim_advertisers` adv on offers.advertiser_id = adv.id
 left join `${dataform.projectConfig.vars.dwh_schema}.dim_jvs` jvs on offers.jv_id = jvs.id
---left join `${dataform.projectConfig.vars.dwh_schema}.dim_geo` geo on fds.geo_id = geo.id
+left join `${dataform.projectConfig.vars.dwh_schema}.dim_geo` geo on fds.geo_id = geo.id
 --left join `${dataform.projectConfig.vars.dwh_schema}.dim_companies` comp on offers.company_id=comp.id
 where fds.date >=DATE_SUB(CURRENT_DATE(), INTERVAL 60 DAY) 
-group by 1,2,3,4,5,6,7,8,9,10--,11,12
+group by 1,2,3,4,5,6,7,8,9,10,11--,12

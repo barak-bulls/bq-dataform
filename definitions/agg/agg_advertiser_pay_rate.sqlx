@@ -8,7 +8,7 @@ config {
 --2. Find how much is 75% of paid clicks for this advertiser
 with gt10clicks as (
   select advertiser_id, max(cum_paid_clicks)*0.75 paid_clicks --Implements 2
-  from ${ref("agg_advertiser_daily_commissions")} dc
+  from `bm-bigquery.dwh_prod.agg_advertiser_daily_commissions` dc
   group by advertiser_id
   having max(cum_paid_clicks)>9) --Implements 1
 
@@ -22,8 +22,9 @@ with gt10clicks as (
     , cum_paid_clicks/(cum_paid_clicks+cum_rejected_clicks) pr_clicks_75 --Implements 2
     , case when cum_paid_usd=0 then 0 else
         cum_paid_usd/(cum_paid_usd+cum_rejected_usd) end pr_usd_75 --Implements 3
+    ,cum_rejected_clicks
   from gt10clicks g
-    inner join ${ref("agg_advertiser_daily_commissions")} dc using (advertiser_id)
+    inner join `bm-bigquery.dwh_prod.agg_advertiser_daily_commissions` dc using (advertiser_id)
   where dc.cum_paid_clicks>=g.paid_clicks --Implements 1
   qualify row_number() over (partition by advertiser_id order by date)=1)
 
@@ -31,13 +32,13 @@ with gt10clicks as (
 ,late_monthly as (
   select advertiser_id
     , last_day(dc.date,MONTH) eMonth
-    , 1-sum(clicks_rejected)/sum(clicks_total) clicks_month_potential --Implements b
+    , 1-sum(clicks_rejected)/sum(clicks_total) clicks_month_potential --implements 1b
     , case when sum(usd_total)=0 then 0 else  
-        1-sum(usd_rejected)/sum(usd_total) end usd_month_potential --Implements c
-  from ${ref("agg_advertiser_daily_commissions")} dc
+        1-sum(usd_rejected)/sum(usd_total) end usd_month_potential --implements 1c
+  from `bm-bigquery.dwh_prod.agg_advertiser_daily_commissions` dc
     inner join pr75 using (advertiser_id)
   where dc.date>last_day(pr75.date,MONTH)
-    and dc.date<date_trunc(current_date(), MONTH) --Implements a
+    and dc.date<date_trunc(current_date(), MONTH) --implements 1a
   group by advertiser_id,last_day(dc.date,MONTH)
   having sum(clicks_total)>9)
 
@@ -52,14 +53,19 @@ with gt10clicks as (
 ,early_reject as (
   select advertiser_id 
     ,cum_rejected_clicks/cum_total_clicks early_reject
-    from ${ref("agg_advertiser_daily_commissions")} dc
+    from `bm-bigquery.dwh_prod.agg_advertiser_daily_commissions` dc
   where advertiser_id not in (select advertiser_id from gt10clicks)
     and cum_total_clicks>9
   qualify row_number() over (partition by advertiser_id order by date)=1)
 
 select dc.advertiser_id
     ,cum_total_clicks as total_clicks
-    ,cum_paid_clicks as paid_clicks
+    ,cum_paid_clicks as paid_click
+    ,pr_clicks_75 pr_75
+    ,pr75.date as date_75
+    ,la.clicks_month_potential
+    ,la.usd_month_potential
+    ,pr75.cum_rejected_clicks
     ,case when 
       (pr_clicks_75<clicks_month_potential or clicks_month_potential is null) 
       then pr_clicks_75 else  clicks_month_potential end pr_clicks
@@ -67,7 +73,8 @@ select dc.advertiser_id
       (pr_usd_75<usd_month_potential or usd_month_potential is null) 
       then pr_usd_75 else  usd_month_potential end pr_usd
     ,early_reject
-  from ${ref("agg_advertiser_daily_commissions")} dc
+
+  from `bm-bigquery.dwh_prod.agg_advertiser_daily_commissions` dc
     left outer join pr75 using (advertiser_id)
     left outer join late_adv la using (advertiser_id)
     left outer join early_reject er using (advertiser_id)
